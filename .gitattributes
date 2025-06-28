@@ -1,2 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+C:/Users/SpinS/Downloads/Telegram[[:space:]]Desktop/Deltarune/deltarune_ipa_test/Payload/DELTARUNE.app/games filter=lfs diff=lfs merge=lfs -text
+*.win filter=lfs diff=lfs merge=lfs -text
