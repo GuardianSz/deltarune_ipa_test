@@ -1,40 +1,33 @@
-name: Release Deltarune IPA
+name: Build TrollStore-Compatible IPA
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Release version (e.g., 1.0)'
-        required: true
 
 jobs:
-  package-ipa:
+  build-ipa:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify structure
+      - name: Create Payload folder
         run: |
-          ls -l Payload/
-          ls -l Payload/DELTARUNE.app/
+          mkdir -p Payload
+          mv DELTARUNE.app Payload/ || true  # Moves .app into Payload/
 
-      - name: Create IPA file
+      - name: Fix permissions (critical!)
         run: |
-          cd Payload
-          zip -qr ../deltarune.ipa *
-          cd ..
-          # Verify the IPA was created correctly
-          file deltarune.ipa
+          chmod +x Payload/DELTARUNE.app/UNDERTALE  # Make binary executable
+          chmod 755 Payload/DELTARUNE.app  # Fix app folder permissions
 
-      - name: Create Release
+      - name: Repack IPA
+        run: |
+          zip -qr deltarune.ipa Payload
+          file deltarune.ipa  # Verify output
+
+      - name: Upload Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ github.event.inputs.version }}
-          name: Deltarune v${{ github.event.inputs.version }}
-          body: |
-            Custom Deltarune IPA build
-            - Contains latest game files
-            - No code signing
+          tag_name: trollstore-v1.0
           files: deltarune.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
