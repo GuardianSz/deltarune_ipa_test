@@ -1,0 +1,66 @@
+name: Build TrollStore-Compatible IPA
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0)'
+        required: true
+
+jobs:
+  build-ipa:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ==== STEP 1: Verify structure ====
+      - name: Check Payload/DELTARUNE.app exists
+        run: |
+          if [ ! -d "Payload/DELTARUNE.app" ]; then
+            echo "❌ Error: Payload/DELTARUNE.app not found!"
+            exit 1
+          fi
+          ls -l Payload/DELTARUNE.app/
+
+      # ==== STEP 2: Clean problematic files ====
+      - name: Remove code signatures and junk
+        run: |
+          rm -rf Payload/DELTARUNE.app/_CodeSignature || true
+          rm Payload/DELTARUNE.app/embedded.mobileprovision || true
+          rm Payload/DELTARUNE.app/.DS_Store || true
+
+      # ==== STEP 3: Fix permissions ====
+      - name: Make binary executable
+        run: |
+          chmod +x Payload/DELTARUNE.app/UNDERTALE
+          chmod 755 Payload/DELTARUNE.app
+
+      # ==== STEP 4: Fake-sign for TrollStore ====
+      - name: Install ldid (fake-signing tool)
+        run: |
+          curl -LO https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5-procursus7/ldid_macosx_x86_64
+          chmod +x ldid_macosx_x86_64
+          sudo mv ldid_macosx_x86_64 /usr/local/bin/ldid
+
+      - name: Fake-sign binary
+        run: |
+          ldid -S Payload/DELTARUNE.app/UNDERTALE
+
+      # ==== STEP 5: Create IPA ====
+      - name: Repack IPA
+        run: |
+          cd Payload
+          zip -qr ../deltarune.ipa *
+          cd ..
+          file deltarune.ipa  # Verify output
+
+      # ==== STEP 6: Upload to Releases ====
+      - name: Upload Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: trollstore-v${{ github.event.inputs.version }}
+          name: "Deltarune (TrollStore) v${{ github.event.inputs.version }}"
+          body: "Unsigned IPA for TrollStore - Built for iOS"
+          files: deltarune.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
