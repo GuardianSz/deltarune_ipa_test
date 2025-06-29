@@ -1,28 +1,40 @@
-name: Repackage Deltarune IPA
+name: Release Deltarune IPA
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0)'
+        required: true
 
 jobs:
-  repackage-ipa:
+  package-ipa:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4  # Updated from v3 to v4
+      - uses: actions/checkout@v4
 
-      - name: Verify Payload structure
+      - name: Verify structure
         run: |
           ls -l Payload/
           ls -l Payload/DELTARUNE.app/
 
-      - name: Zip into IPA
+      - name: Create IPA file
         run: |
           cd Payload
           zip -qr ../deltarune.ipa *
           cd ..
-          echo "IPA file created!"
+          # Verify the IPA was created correctly
+          file deltarune.ipa
 
-      - name: Upload IPA as artifact
-        uses: actions/upload-artifact@v4  # Updated from v3 to v4
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: Deltarune-Repackaged.ipa
-          path: deltarune.ipa
+          tag_name: v${{ github.event.inputs.version }}
+          name: Deltarune v${{ github.event.inputs.version }}
+          body: |
+            Custom Deltarune IPA build
+            - Contains latest game files
+            - No code signing
+          files: deltarune.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
