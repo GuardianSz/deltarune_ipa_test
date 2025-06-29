@@ -7,17 +7,9 @@ jobs:
   repackage-ipa:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3  # Checks out your repo with Payload/DELTARUNE.app
+      - uses: actions/checkout@v4  # Updated from v3 to v4
 
-      - name: Create Payload folder (if not already in repo)
-        run: |
-          mkdir -p Payload
-          # (Optional) If DELTARUNE.app is in root instead of Payload/, move it:
-          if [ -d "DELTARUNE.app" ]; then
-            mv DELTARUNE.app Payload/
-          fi
-
-      - name: Verify structure
+      - name: Verify Payload structure
         run: |
           ls -l Payload/
           ls -l Payload/DELTARUNE.app/
@@ -30,7 +22,7 @@ jobs:
           echo "IPA file created!"
 
       - name: Upload IPA as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4  # Updated from v3 to v4
         with:
           name: Deltarune-Repackaged.ipa
           path: deltarune.ipa
